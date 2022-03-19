@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Visualisation arbres plantés à Paris</title>
+    <link rel="stylesheet" type="text/css" href="index.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Fredoka">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A==" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" crossorigin=""></script>
+    <script src="https://code.jquery.com/jquery-latest.js"></script>
+    <script src="https://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
+</head>
+
+<body onload="data()">
+    <div>
+        <h1>Visualisation des arbres plantés à Paris</h1>
+        <label for="arrondissement">Emplacement :</label>
+        <select name="arrondissement" id="arrondissement"></select>
+        <label for="circonferenceencm">Circonference en cm :</label>
+        <select name="circonferenceencm" id="circonferenceencm"></select>
+        <label for="hauteurenm">Hauteur en mètre :</label>
+        <select name="hauteurenm" id="hauteurenm"></select>
+        <br>
+        <label for="espece">Espèce :</label>
+        <select name="espece" id="espece"></select>
+        <label for="genre">Genre :</label>
+        <select name="genre" id="genre"></select>
+        <label for="libellefrancais">Libellé français :</label>
+        <select name="libellefrancais" id="libellefrancais"></select>
+
+
+
+        <div id="map"></div>
+    </div>
+
+    <div id="message">
+        <p id="attention">⚠️</p>
+        <p>Ce site ne permet pas encore de fusionner les recherches entre elles. C'est une première version.</p>
+        <p>Risque de latence pour certaines recherches en raison du nombre important d'éléments sur la map.</p>
+    </div>
+</body>
+<script>
+    var points = [];
+    var map = L.map('map').setView([48.85293834093294, 2.311390846906407], 12);
+
+    function supprimerPoints() {
+        // on supprime les points sur la maps
+        for (i = 0; i < points.length; i++) {
+            map.removeLayer(points[i]);
+        }
+        points = [];
+    }
+
+    function data() {
+
+        $(function() {
+            var xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 200) {
+                    var allData = JSON.parse(this.responseText);
+
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    }).addTo(map);
+                    var tabArrondissment = [];
+                    var arrondissement;
+                    var tabCirconferenceencm = [];
+                    var circonferenceencm;
+                    var tabHauteurenm = [];
+                    var hauteurenm;
+                    var tabEspece = [];
+                    var espece;
+                    var tabGenre = [];
+                    var genre;
+                    var tabLibellefrancais = [];
+                    var libellefrancais;
+
+
+
+                    var adresse;
+                    var complementadresse;
+
+
+                    tabArrondissment.push("------- CHOISIR -------")
+                    tabCirconferenceencm.push("------- CHOISIR -------")
+                    tabHauteurenm.push("------- CHOISIR -------")
+                    tabEspece.push("------- CHOISIR -------")
+                    tabGenre.push("------- CHOISIR -------")
+                    tabLibellefrancais.push("------- CHOISIR -------")
+
+                    //Creation du tab avec les valeurs qu'on insere
+                    for (var i = 0; i < allData.length; i++) {
+
+                        arrondissement = allData[i]["fields"]['arrondissement']
+                        circonferenceencm = allData[i]["fields"]['circonferenceencm']
+                        hauteurenm = allData[i]["fields"]['hauteurenm']
+                        espece = allData[i]["fields"]['espece']
+                        genre = allData[i]["fields"]['genre']
+                        libellefrancais = allData[i]["fields"]['libellefrancais']
+
+                        if ($.inArray(arrondissement, tabArrondissment) == -1) {
+                            tabArrondissment.push(arrondissement)
+                        }
+                        if ($.inArray(circonferenceencm, tabCirconferenceencm) == -1) {
+                            tabCirconferenceencm.push(circonferenceencm)
+                        }
+                        if ($.inArray(hauteurenm, tabHauteurenm) == -1) {
+                            tabHauteurenm.push(hauteurenm)
+                        }
+                        if ($.inArray(espece, tabEspece) == -1) {
+                            tabEspece.push(espece)
+                        }
+                        if ($.inArray(genre, tabGenre) == -1) {
+                            tabGenre.push(genre)
+                        }
+                        if ($.inArray(libellefrancais, tabLibellefrancais) == -1) {
+                            tabLibellefrancais.push(libellefrancais)
+                        }
+                    }
+
+
+                    // Affichage du contenu du tab
+                    for (var j = 0; j < tabArrondissment.length; j++) {
+                        $("#arrondissement").append('<option value = "' + tabArrondissment[j] + '">' + tabArrondissment[j] + '</option>')
+                    }
+                    for (var j = 0; j < tabCirconferenceencm.length; j++) {
+                        $("#circonferenceencm").append('<option value = "' + tabCirconferenceencm[j] + '">' + tabCirconferenceencm[j] + '</option>')
+                    }
+                    for (var j = 0; j < tabHauteurenm.length; j++) {
+                        $("#hauteurenm").append('<option value = "' + tabHauteurenm[j] + '">' + tabHauteurenm[j] + '</option>')
+                    }
+                    for (var j = 0; j < tabEspece.length; j++) {
+                        $("#espece").append('<option value = "' + tabEspece[j] + '">' + tabEspece[j] + '</option>')
+                    }
+                    for (var j = 0; j < tabGenre.length; j++) {
+                        $("#genre").append('<option value = "' + tabGenre[j] + '">' + tabGenre[j] + '</option>')
+                    }
+                    for (var j = 0; j < tabLibellefrancais.length; j++) {
+                        $("#libellefrancais").append('<option value = "' + tabLibellefrancais[j] + '">' + tabLibellefrancais[j] + '</option>')
+                    }
+
+                    // Pour l'arrondissement
+
+                    // Dès qu'on change un truc dans le select
+                    $("#arrondissement").change(function() {
+                        supprimerPoints()
+
+                        // on récupère la valeur du champs sélectionné
+                        var arron = $(this).children("option:selected").val();
+                        for (var i = 0; i < allData.length; i++) {
+                            arrondissement = allData[i]["fields"]['arrondissement']
+                            adresse = allData[i]["fields"]['adresse']
+                            complementadresse = allData[i]["fields"]['complementadresse']
+                            circonferenceencm = allData[i]["fields"]['circonferenceencm']
+                            hauteurenm = allData[i]["fields"]['hauteurenm']
+                            espece = allData[i]["fields"]['espece']
+                            genre = allData[i]["fields"]['genre']
+                            libellefrancais = allData[i]["fields"]['libellefrancais']
+                                // On ajoute le point s'il trouve la valeur dans la liste et récupère les coordonnées
+                            if (arrondissement == arron) {
+                                var lon = allData[i]["fields"]['geo_point_2d'][0]
+                                var lat = allData[i]["fields"]['geo_point_2d'][1]
+
+                                var point = L.marker([lon, lat]).addTo(map)
+                                    .bindPopup(arrondissement + '<br> Adresse : ' + adresse +
+                                        "<br>Complément d'adresse : " + complementadresse +
+                                        "<br>Circonférence en cm : " + circonferenceencm +
+                                        "<br>Hauteur en mètre : " + hauteurenm +
+                                        "<br>Espèce : " + espece +
+                                        "<br>Genre : " + genre +
+                                        "<br>Libellé français : " + libellefrancais +
+                                        '<br>')
+                                    .openPopup();
+
+                                points.push(point);
+                            }
+                        }
+                    })
+
+
+                    // Pour la circonference en cm
+                    $("#circonferenceencm").change(function() {
+                        supprimerPoints()
+
+                        // on récupère la valeur du champs sélectionné
+                        var circon = $(this).children("option:selected").val();
+                        for (var i = 0; i < allData.length; i++) {
+                            arrondissement = allData[i]["fields"]['arrondissement']
+                            adresse = allData[i]["fields"]['adresse']
+                            complementadresse = allData[i]["fields"]['complementadresse']
+                            circonferenceencm = allData[i]["fields"]['circonferenceencm']
+                            hauteurenm = allData[i]["fields"]['hauteurenm']
+                            espece = allData[i]["fields"]['espece']
+                            genre = allData[i]["fields"]['genre']
+                            libellefrancais = allData[i]["fields"]['libellefrancais']
+                                // On ajoute le point s'il trouve la valeur dans la liste et récupère les coordonnées
+                            if (circonferenceencm == circon) {
+                                var lon = allData[i]["fields"]['geo_point_2d'][0]
+                                var lat = allData[i]["fields"]['geo_point_2d'][1]
+
+                                var point = L.marker([lon, lat]).addTo(map)
+                                    .bindPopup(arrondissement + '<br> Adresse : ' + adresse +
+                                        "<br>Complément d'adresse : " + complementadresse +
+                                        "<br>Circonférence en cm : " + circonferenceencm +
+                                        "<br>Hauteur en mètre : " + hauteurenm +
+                                        "<br>Espece : " + espece +
+                                        "<br>Genre : " + genre +
+                                        "<br>Libellé français : " + libellefrancais +
+                                        '<br>')
+                                    .openPopup();
+
+                                points.push(point);
+                            }
+                        }
+                    })
+
+
+
+
+
+                    // Pour la hauteur en mètre
+                    $("#hauteurenm").change(function() {
+                        supprimerPoints()
+
+                        // on récupère la valeur du champs sélectionné
+                        var haut = $(this).children("option:selected").val();
+                        for (var i = 0; i < allData.length; i++) {
+                            arrondissement = allData[i]["fields"]['arrondissement']
+                            adresse = allData[i]["fields"]['adresse']
+                            complementadresse = allData[i]["fields"]['complementadresse']
+                            circonferenceencm = allData[i]["fields"]['circonferenceencm']
+                            hauteurenm = allData[i]["fields"]['hauteurenm']
+                            espece = allData[i]["fields"]['espece']
+                            genre = allData[i]["fields"]['genre']
+                            libellefrancais = allData[i]["fields"]['libellefrancais']
+                                // On ajoute le point s'il trouve la valeur dans la liste et récupère les coordonnées
+                            if (hauteurenm == haut) {
+                                var lon = allData[i]["fields"]['geo_point_2d'][0]
+                                var lat = allData[i]["fields"]['geo_point_2d'][1]
+
+                                var point = L.marker([lon, lat]).addTo(map)
+                                    .bindPopup(arrondissement + '<br> Adresse : ' + adresse +
+                                        "<br>Complément d'adresse : " + complementadresse +
+                                        "<br>Circonférence en cm : " + circonferenceencm +
+                                        "<br>Hauteur en mètre : " + hauteurenm +
+                                        "<br>Espece : " + espece +
+                                        "<br>Genre : " + genre +
+                                        "<br>Libellé français : " + libellefrancais +
+                                        '<br>')
+                                    .openPopup();
+
+                                points.push(point);
+                            }
+                        }
+                    })
+
+
+
+
+
+                    // Pour l'espece'
+                    $("#espece").change(function() {
+                        supprimerPoints()
+
+                        // on récupère la valeur du champs sélectionné
+                        var esp = $(this).children("option:selected").val();
+                        for (var i = 0; i < allData.length; i++) {
+                            arrondissement = allData[i]["fields"]['arrondissement']
+                            adresse = allData[i]["fields"]['adresse']
+                            complementadresse = allData[i]["fields"]['complementadresse']
+                            circonferenceencm = allData[i]["fields"]['circonferenceencm']
+                            hauteurenm = allData[i]["fields"]['hauteurenm']
+                            espece = allData[i]["fields"]['espece']
+                            genre = allData[i]["fields"]['genre']
+                            libellefrancais = allData[i]["fields"]['libellefrancais']
+                                // On ajoute le point s'il trouve la valeur dans la liste et récupère les coordonnées
+                            if (espece == esp) {
+                                var lon = allData[i]["fields"]['geo_point_2d'][0]
+                                var lat = allData[i]["fields"]['geo_point_2d'][1]
+
+                                var point = L.marker([lon, lat]).addTo(map)
+                                    .bindPopup(arrondissement + '<br> Adresse : ' + adresse +
+                                        "<br>Complément d'adresse : " + complementadresse +
+                                        "<br>Circonférence en cm : " + circonferenceencm +
+                                        "<br>Hauteur en mètre : " + hauteurenm +
+                                        "<br>Espece : " + espece +
+                                        "<br>Genre : " + genre +
+                                        "<br>Libellé français : " + libellefrancais +
+                                        '<br>')
+                                    .openPopup();
+
+                                points.push(point);
+                            }
+                        }
+                    })
+
+
+
+
+
+
+                    // Pour le genre
+                    $("#genre").change(function() {
+                        supprimerPoints()
+
+                        // on récupère la valeur du champs sélectionné
+                        var gen = $(this).children("option:selected").val();
+                        for (var i = 0; i < allData.length; i++) {
+                            arrondissement = allData[i]["fields"]['arrondissement']
+                            adresse = allData[i]["fields"]['adresse']
+                            complementadresse = allData[i]["fields"]['complementadresse']
+                            circonferenceencm = allData[i]["fields"]['circonferenceencm']
+                            hauteurenm = allData[i]["fields"]['hauteurenm']
+                            espece = allData[i]["fields"]['espece']
+                            genre = allData[i]["fields"]['genre']
+                            libellefrancais = allData[i]["fields"]['libellefrancais']
+                                // On ajoute le point s'il trouve la valeur dans la liste et récupère les coordonnées
+                            if (genre == gen) {
+                                var lon = allData[i]["fields"]['geo_point_2d'][0]
+                                var lat = allData[i]["fields"]['geo_point_2d'][1]
+
+                                var point = L.marker([lon, lat]).addTo(map)
+                                    .bindPopup(arrondissement + '<br> Adresse : ' + adresse +
+                                        "<br>Complément d'adresse : " + complementadresse +
+                                        "<br>Circonférence en cm : " + circonferenceencm +
+                                        "<br>Hauteur en mètre : " + hauteurenm +
+                                        "<br>Espece : " + espece +
+                                        "<br>Genre : " + genre +
+                                        "<br>Libellé français : " + libellefrancais +
+                                        '<br>')
+                                    .openPopup();
+
+                                points.push(point);
+                            }
+                        }
+                    })
+
+
+
+
+                    // Pour le libellé français
+                    $("#libellefrancais").change(function() {
+                        supprimerPoints()
+
+                        // on récupère la valeur du champs sélectionné
+                        var lib = $(this).children("option:selected").val();
+                        for (var i = 0; i < allData.length; i++) {
+                            arrondissement = allData[i]["fields"]['arrondissement']
+                            adresse = allData[i]["fields"]['adresse']
+                            complementadresse = allData[i]["fields"]['complementadresse']
+                            circonferenceencm = allData[i]["fields"]['circonferenceencm']
+                            hauteurenm = allData[i]["fields"]['hauteurenm']
+                            espece = allData[i]["fields"]['espece']
+                            genre = allData[i]["fields"]['genre']
+                            libellefrancais = allData[i]["fields"]['libellefrancais']
+                                // On ajoute le point s'il trouve la valeur dans la liste et récupère les coordonnées
+                            if (libellefrancais == lib) {
+                                var lon = allData[i]["fields"]['geo_point_2d'][0]
+                                var lat = allData[i]["fields"]['geo_point_2d'][1]
+
+                                var point = L.marker([lon, lat]).addTo(map)
+                                    .bindPopup(arrondissement + '<br> Adresse : ' + adresse +
+                                        "<br>Complément d'adresse : " + complementadresse +
+                                        "<br>Circonférence en cm : " + circonferenceencm +
+                                        "<br>Hauteur en mètre : " + hauteurenm +
+                                        "<br>Espece : " + espece +
+                                        "<br>Genre : " + genre +
+                                        "<br>Libellé français : " + libellefrancais +
+                                        '<br>')
+                                    .openPopup();
+
+                                points.push(point);
+                            }
+                        }
+                    })
+
+                }
+            }
+
+            xhttp.open("GET", "les-arbres-plantes.json", true);
+            xhttp.send();
+        })
+    }
+</script>
+
+</html>
